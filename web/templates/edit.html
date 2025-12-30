@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edit Spell Layout</title>
+
+<style>
+body { background:#0c0f16; color:#fff; font-family:system-ui; text-align:center; }
+.grid { display:grid; grid-template-columns:repeat(4,80px); gap:12px; justify-content:center; margin-bottom:20px; }
+.slot, .palette-spell {
+  width:64px; height:64px;
+  border:2px dashed #555;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  border-radius:8px;
+  position:relative;
+  cursor:pointer;
+}
+.filled { border-style:solid; }
+.selected { outline:3px solid #fff; }
+.palette { margin-top:20px; }
+button { margin:10px; padding:10px 20px; font-size:14px; border:none; border-radius:6px; background:#5a2ca0; color:#fff; cursor:pointer; }
+img { width:64px; pointer-events:none; }
+.spell-label { font-size:12px; margin-top:4px; text-align:center; line-height:1.2; max-width:80px; word-wrap:break-word; opacity:0.85; }
+.remove-btn {
+  position:absolute; top:-6px; right:-6px;
+  background:#c00; color:#fff;
+  border-radius:50%; width:20px; height:20px;
+  font-size:14px; line-height:20px;
+  text-align:center; cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Edit Spell Sets</h2>
+<div id="sets"></div>
+
+<h2>All Spells</h2>
+<div class="grid palette" id="palette"></div>
+
+<div id="status" style="margin:10px;">No selection</div>
+<button onclick="clearSelection()">Clear Selection</button>
+<button onclick="save()">Save & Return</button>
+
+<script>
+const allSpells = {{ all_spells | tojson }};
+const spellOrder = {{ spell_order | tojson }};
+let layout = {{ spell_sets | tojson }};
+let selected = null;
+
+const SETS = ["1","2","3","4"];
+const SLOTS = ["1","2","3","4"];
+
+/* normalize layout */
+SETS.forEach(s=>{
+  layout[s] ||= {};
+  SLOTS.forEach(sl=>{
+    if (!(sl in layout[s])) layout[s][sl] = null;
+  });
+});
+
+/* ---------- RENDER ---------- */
+function render() {
+  const sets = document.getElementById("sets");
+  sets.innerHTML = "";
+
+  SETS.forEach(setId=>{
+    const wrapper = document.createElement("div");
+    wrapper.className = "set-wrapper";
+
+    const title = document.createElement("h3");
+    title.textContent = `Set ${setId}`;
+    wrapper.appendChild(title);
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    grid.dataset.set = setId;
+
+    SLOTS.forEach(slot=>{
+      const el = document.createElement("div");
+      el.className = "slot";
+      el.dataset.set = setId;
+      el.dataset.slot = slot;
+
+      if (
+        selected?.type === "slot" &&
+        selected.set === setId &&
+        selected.slot === slot
+      ) {
+        el.classList.add("selected");
+      }
+
+      const spell = layout[setId][slot];
+      if (spell) {
+        el.classList.add("filled");
+        el.innerHTML = `
+          <img src="/static/icons/${allSpells[spell].icon}">
+          <div class="spell-label">${spell}</div>
+          <div class="remove-btn" data-remove="1">✕</div>
+        `;
+      }
+
+      grid.appendChild(el);
+    });
+
+    wrapper.appendChild(grid);
+    sets.appendChild(wrapper);
+  });
+
+  const palette = document.getElementById("palette");
+  palette.innerHTML = "";
+
+  // Palette in JSON order
+  for (const name of spellOrder) {
+    const p = document.createElement("div");
+    p.className = "palette-spell";
+    p.dataset.spell = name;
+
+    if (selected?.type==="palette" && selected.spell===name)
+      p.classList.add("selected");
+
+    p.innerHTML = `
+      <img src="/static/icons/${allSpells[name].icon}">
+      <div class="spell-label">${name}</div>
+    `;
+    palette.appendChild(p);
+  }
+
+  document.getElementById("status").textContent =
+    selected ? `Selected: ${selected.label}` : "No selection";
+}
+
+/* ---------- EVENT HANDLING ---------- */
+document.addEventListener("click", e=>{
+  const remove = e.target.closest("[data-remove]");
+  if (remove) {
+    const slot = remove.closest(".slot");
+    const set = slot.dataset.set;
+    const sl = slot.dataset.slot;
+    layout[set][sl] = null;
+    selected = null;
+    render();
+    return;
+  }
+
+  const slot = e.target.closest(".slot");
+  if (slot) {
+    const set = slot.dataset.set;
+    const sl = slot.dataset.slot;
+    handleSlotTap(set, sl);
+    return;
+  }
+
+  const palette = e.target.closest(".palette-spell");
+  if (palette) {
+    selectPalette(palette.dataset.spell);
+  }
+});
+
+/* ---------- SELECTION ---------- */
+function selectPalette(name) {
+  selected = { type:"palette", spell:name, label:name };
+  render();
+}
+
+function handleSlotTap(set, slot) {
+  const spell = layout[set][slot];
+
+  if (!selected) {
+    if (spell)
+      selected = { type:"slot", set, slot, spell, label:spell };
+    render();
+    return;
+  }
+
+  if (selected.type === "palette") {
+    layout[set][slot] = selected.spell;
+  }
+
+  if (selected.type === "slot") {
+    if (selected.set === set && selected.slot === slot) {
+      layout[set][slot] = null;
+    } else {
+      const temp = layout[set][slot];
+      layout[set][slot] = selected.spell;
+      layout[selected.set][selected.slot] = temp;
+    }
+  }
+
+  selected = null;
+  render();
+}
+
+function clearSelection() {
+  selected = null;
+  render();
+}
+
+/* ---------- SAVE ---------- */
+function save() {
+  const compact = {};
+  SETS.forEach(s=>{
+    compact[s] = {};
+    SLOTS.forEach(sl=>{
+      if (layout[s][sl]) compact[s][sl] = layout[s][sl];
+    });
+  });
+
+  fetch("/save-layout",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      all_spells: allSpells,
+      spell_order: spellOrder,
+      spell_sets: compact
+    })
+  }).then(()=>{
+    window.location.href = "/";
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>
+

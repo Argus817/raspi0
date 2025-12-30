@@ -4,26 +4,6 @@
             "icon": "Accio_icon.png",
             "type": "force"
         },
-        "Arresto Momentum": {
-            "icon": "Arresto_Momentum_icon.png",
-            "type": "control"
-        },
-        "Avada Kedavra": {
-            "icon": "Avada_Kedavra_icon.png",
-            "type": "forbidden"
-        },
-        "Bombarda": {
-            "icon": "Bombarda_icon.png",
-            "type": "damage"
-        },
-        "Confringo": {
-            "icon": "Confringo_icon.png",
-            "type": "damage"
-        },
-        "Crucio": {
-            "icon": "Crucio_icon.png",
-            "type": "forbidden"
-        },
         "Depulso": {
             "icon": "Depulso_icon.png",
             "type": "force"
@@ -32,6 +12,34 @@
             "icon": "Descendo_icon.png",
             "type": "force"
         },
+        "Flipendo": {
+            "icon": "Flipendo_icon.png",
+            "type": "force"
+        },
+        "Arresto Momentum": {
+            "icon": "Arresto_Momentum_icon.png",
+            "type": "control"
+        },
+        "Glacius": {
+            "icon": "Glacius_icon.png",
+            "type": "control"
+        },
+        "Levioso": {
+            "icon": "Levioso_icon.png",
+            "type": "control"
+        },
+        "Transformation": {
+            "icon": "Transformation_icon.png",
+            "type": "control"
+        },
+        "Bombarda": {
+            "icon": "Bombarda_icon.png",
+            "type": "damage"
+        },
+        "Confringo": {
+            "icon": "Confringo_icon.png",
+            "type": "damage"
+        }, 
         "Diffindo": {
             "icon": "Diffindo_icon.png",
             "type": "damage"
@@ -40,21 +48,17 @@
             "icon": "Expelliarmus_icon.png",
             "type": "damage"
         },
-        "Flipendo": {
-            "icon": "Flipendo_icon.png",
-            "type": "force"
-        },
-        "Glacius": {
-            "icon": "Glacius_icon.png",
-            "type": "control"
+        "Crucio": {
+            "icon": "Crucio_icon.png",
+            "type": "forbidden"
         },
         "Imperio": {
             "icon": "Imperio_icon.png",
             "type": "forbidden"
         },
-        "Levioso": {
-            "icon": "Levioso_icon.png",
-            "type": "control"
+        "Avada Kedavra": {
+            "icon": "Avada_Kedavra_icon.png",
+            "type": "forbidden"
         },
         "Lumos": {
             "icon": "Lumos_icon.png",
@@ -63,10 +67,6 @@
         "Reparo": {
             "icon": "Reparo_icon.png",
             "type": "utility"
-        },
-        "Transformation": {
-            "icon": "Transformation_icon.png",
-            "type": "control"
         }
     },
     "spell_order": [
@@ -115,3 +115,4 @@
         }
     }
 }
+
