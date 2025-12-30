@@ -67,6 +67,14 @@
         "Transformation": {
             "icon": "Transformation_icon.png",
             "type": "control"
+        },
+        "Wingardium Leviosa": {
+            "icon": "Wingardium_Leviosa_icon.png",
+            "type": "utility"
+        },
+        "Disillusionment": {
+            "icon": "Disillusionment_icon.png",
+            "type": "utility"
         }
     },
     "spell_order": [
@@ -86,7 +94,9 @@
         "Imperio",
         "Avada Kedavra",
         "Lumos",
-        "Reparo"
+        "Reparo",
+        "Wingardium Leviosa",
+        "Disillusionment"
     ],
     "spell_sets": {
         "1": {
