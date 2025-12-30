@@ -1,0 +1,28 @@
+{
+    "spell_sets": {
+        "1": {
+            "1": { "name": "Levioso", "icon": "Levioso_icon.png", "type": "control" },
+            "2": { "name": "Expelliarmus", "icon": "Expelliarmus_icon.png", "type": "damage" },
+            "3": { "name": "Depulso", "icon": "Depulso_icon.png",  "type": "force" },
+            "4": { "name": "Crucio", "icon": "Crucio_icon.png",  "type": "forbidden" }
+        },
+        "2": {
+            "1": { "name": "Glacius", "icon": "Glacius_icon.png", "type": "control" },
+            "2": { "name": "Diffindo", "icon": "Diffindo_icon.png", "type": "damage" },
+            "3": { "name": "Flipendo", "icon": "Flipendo_icon.png",  "type": "force" },
+            "4": { "name": "Imperio", "icon": "Imperio_icon.png",  "type": "forbidden" }
+        },
+        "3": {
+            "1": { "name": "Arresto Momentum", "icon": "Arresto_Momentum_icon.png", "type": "control" },
+            "2": { "name": "Confringo", "icon": "Confringo_icon.png", "type": "damage" },
+            "3": { "name": "Descendo", "icon": "Descendo_icon.png",  "type": "force" },
+            "4": { "name": "Avada Kedavra", "icon": "Avada_Kedavra_icon.png",  "type": "forbidden" }
+        },
+        "4": {
+            "1": { "name": "Transformation", "icon": "Transformation_icon.png", "type": "control" },
+            "2": { "name": "Bombarda", "icon": "Bombarda_icon.png", "type": "damage" },
+            "3": { "name": "Accio", "icon": "Accio_icon.png",  "type": "force" },
+            "4": { "name": "Lumos", "icon": "Lumos_icon.png", "type": "utility" }
+        }
+  }
+}

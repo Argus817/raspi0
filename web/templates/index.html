@@ -1,0 +1,68 @@
+<!DOCTYPE html> 
+<html> 
+    <head> 
+        <meta name="viewport" content="width=device-width, initial-scale=1"> 
+        <title>Hogwarts Spell Deck</title> 
+        <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script> 
+        <style> 
+        body { background: #0c0f16; color: #fff; font-family: system-ui, sans-serif; } 
+        table { border-collapse: collapse; margin: 20px auto; } 
+        th, td { padding: 10px; text-align: center; vertical-align: top; } 
+        th { opacity: 0.7; font-size: 14px; } 
+        .set-label { opacity: 0.6; font-size: 14px; } 
+        .spell-wrapper { display: flex; flex-direction: column; align-items: center; gap: 6px; } 
+        .spell { width: 64px; height: 64px; transform: rotate(45deg); display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 8px; } 
+        .spell img { width: 64px; transform: rotate(-45deg); } 
+        .spellname { font-size: 13px; text-align: center; max-width: 80px; line-height: 1.5; } 
+        /* Spell colors */ 
+        .damage { background: #8b1e1e; } 
+        .force { background: #5a2ca0; } 
+        .control { background: #c7a428; } 
+        .utility { background: #858585 } 
+        .forbidden { background: #2d7f5e; } 
+        </style> 
+    </head> 
+    <body> 
+        <h2 style="text-align:center;">Spell Sets</h2> 
+        <table> 
+            <thead> 
+                <tr> 
+                    <th>Set</th> 
+                    <th>Slot 1</th> 
+                    <th>Slot 2</th> 
+                    <th>Slot 3</th> 
+                    <th>Slot 4</th> 
+                </tr> 
+            </thead> 
+            <tbody> 
+                {% for spellset, spells in spells.items() %} 
+                <tr> 
+                    <td class="set-label">{{ spellset }}</td> 
+                    {% for slot in ["1", "2", "3", "4"] %} 
+                    <td> 
+                        {% if spells.get(slot) %} 
+                        {% set spell = spells[slot] %} 
+                        <div class="spell-wrapper"> 
+                            <div class="spell {{ spell.type | default('utility') }}" onclick="cast('{{ spellset }}','{{ slot }}')" title="{{ spell.name | default('') }}"> 
+                                {% if spell.icon %} 
+                                <img src="/static/icons/{{ spell.icon }}" alt="{{ spell.name }}"> 
+                                {% endif %} 
+                            </div> 
+                            <div class="spellname"> {{ spell.name | default('') }} </div> 
+                        </div> 
+                        {% endif %} 
+                    </td> 
+                    {% endfor %} 
+                </tr> 
+                {% endfor %} 
+            </tbody> 
+        </table> 
+        <script> 
+        const socket = io(); 
+        function cast(spellset, slot) 
+        { 
+            socket.emit("cast", { spellset: spellset, slot: slot }); 
+        } 
+        </script> 
+    </body> 
+</html>
