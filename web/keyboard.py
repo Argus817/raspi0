@@ -277,6 +277,16 @@ def send_key(key, mod=0x00, release=True):
     if release:
         release_keys()
 
+def press_keys(key1, key2=0x00, mod=0x00):
+    # Sends a report with up to two simultaneous key codes
+    report = chr(mod) + chr(0x00) + chr(key1) + chr(key2) + chr(0x00)*4
+    send_report(report)
+
+def send_keys(key1, key2=0x00, mod=0x00, release=True):
+    press_keys(key1, key2=key2, mod=mod)
+    if release:
+        release_keys()
+
 import time
 
 if __name__ == "__main__":
