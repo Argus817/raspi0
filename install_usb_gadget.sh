@@ -27,6 +27,7 @@ install() {
     cp /etc/modules /etc/modules.backup
 
     echo "dtoverlay=dwc2" | tee -a /boot/firmware/config.txt
+    sed -i 's/^otg_mode=1/# otg_mode=1/' /boot/firmware/config.txt
     echo "dwc2" | tee -a /etc/modules
     echo "libcomposite" | tee -a /etc/modules
 
