@@ -23,19 +23,22 @@ ask_reboot() {
 
 install() {
     # Set required settings and modules
+    cp /boot/firmware/config.txt /boot/firmware/config.txt.backup
+    cp /etc/modules /etc/modules.backup
+
     echo "dtoverlay=dwc2" | tee -a /boot/firmware/config.txt
     echo "dwc2" | tee -a /etc/modules
     echo "libcomposite" | tee -a /etc/modules
 
     # Install the USB HID files
-    sudo cp ./pi_zero_usb_media_remote /usr/bin/pi_zero_usb_media_remote
-    sudo chmod +x /usr/bin/pi_zero_usb_media_remote
+    cp ./pi_zero_usb_media_remote /usr/bin/pi_zero_usb_media_remote
+    chmod +x /usr/bin/pi_zero_usb_media_remote
 
     # Set the USB HID file to run on startup
-    sudo cp ./usb_media_remote.service /lib/systemd/system/usb_media_remote.service
-    sudo systemctl daemon-reload
-    sudo systemctl enable usb_media_remote.service
-    sudo service usb_media_remote start
+    cp ./usb_media_remote.service /lib/systemd/system/usb_media_remote.service
+    systemctl daemon-reload
+    systemctl enable usb_media_remote.service
+    service usb_media_remote start
 }
 
 uninstall() {
@@ -47,9 +50,8 @@ uninstall() {
     rm -rf /sys/kernel/config/usb_gadget/my_gadget/
     rm /usr/bin/pi_zero_usb_media_remote
 
-    sed -i '/dtoverlay=dwc2/d' /boot/firmware/config.txt
-    sed -i '/dwc2/d' /etc/modules
-    sed -i '/libcomposite/d' /etc/modules
+    mv /boot/firmware/config.txt.backup /boot/firmware/config.txt
+    mv /etc/modules.backup /etc/modules
 }
 
 if [ -f "/usr/bin/pi_zero_usb_media_remote" ]; then
