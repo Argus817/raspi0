@@ -207,7 +207,7 @@ function save() {
     });
   });
 
-  fetch("/save-layout",{
+  fetch("/hogwarts-legacy/save-layout",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({
@@ -216,7 +216,7 @@ function save() {
       spell_sets: compact
     })
   }).then(()=>{
-    window.location.href = "/";
+    window.location.href = "/hogwarts-legacy";
   });
 }
 

@@ -36,6 +36,10 @@
             "icon": "Diffindo_icon.png",
             "type": "damage"
         },
+        "Disillusionment": {
+            "icon": "Disillusionment_icon.png",
+            "type": "utility"
+        },
         "Expelliarmus": {
             "icon": "Expelliarmus_icon.png",
             "type": "damage"
@@ -70,10 +74,6 @@
         },
         "Wingardium Leviosa": {
             "icon": "Wingardium_Leviosa_icon.png",
-            "type": "utility"
-        },
-        "Disillusionment": {
-            "icon": "Disillusionment_icon.png",
             "type": "utility"
         }
     },

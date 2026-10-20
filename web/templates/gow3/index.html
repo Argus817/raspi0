@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hogwarts Spell Deck</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <style>
+    body { background:#0c0f16; color:#fff; font-family:system-ui; }
+    table { border-collapse:collapse; margin:20px auto; }
+    th, td { padding:10px; text-align:center; }
+    th { opacity:.7; font-size:14px; }
+    .set-label { opacity:.6; font-size:14px; }
+
+    
+  </style>
+</head>
+
+<body>
+<h2 style="text-align:center;">Spell Sets</h2>
+
+
+
+<script>
+const socket = io();
+
+function cast(spellset, slot) {
+  socket.emit("hogwarts-legacy: cast", { spellset, slot });
+}
+</script>
+
+</body>
+</html>
+
+

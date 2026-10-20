@@ -89,7 +89,7 @@
 </table>
 
 <div style="text-align:center; margin-bottom:15px;">
-  <a href="/edit">
+  <a href="/hogwarts-legacy/edit">
     <button style="
       padding:10px 16px;
       font-size:15px;
@@ -108,7 +108,7 @@
 const socket = io();
 
 function cast(spellset, slot) {
-  socket.emit("cast", { spellset, slot });
+  socket.emit("hogwarts-legacy: cast", { spellset, slot });
 }
 </script>
 
