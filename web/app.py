@@ -3,6 +3,7 @@ from flask_socketio import SocketIO
 from datetime import timedelta
 from keyboard import Key, Mouse, send_key, send_keys
 import json
+import os
 import time
 import threading
 
@@ -15,62 +16,42 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 # --- USB HID Keycode Mappings ---
 # Adjust these scancodes to match your emulator (e.g., RPCS3) keyboard configuration:
-KEY_CROSS = Key.KEY_SPACE
-KEY_CIRCLE = Key.KEY_LEFTSHIFT
-KEY_SQUARE = Mouse.LEFT
-KEY_TRIANGLE = Mouse.RIGHT
 
+KEY_REGISTRY = {
+    'CROSS': Key.KEY_SPACE,
+    'CIRCLE': Key.KEY_LEFTSHIFT,
+    'SQUARE': Mouse.LEFT,
+    'TRIANGLE': Mouse.RIGHT,
+    'NONE': 0x00
+}
 
-# --- God of War III Giant Harp Sequence (Rhythmic Timings) ---
-# Structured as: (key1, key2, delay_after_seconds)
-HARP_SEQUENCE = [
-    # --- Phrase 1: X, X, X, CIRCLE (Steady moderate tempo) ---
-    (KEY_CROSS, 0x00, 1),
-    (KEY_CROSS, 0x00, 1),
-    (KEY_CROSS, 0x00, 1),
-    (KEY_CIRCLE, 0x00, 0.90), # Brief pause at end of phrase
-    
-    # --- Phrase 2: SQUARE, CIRCLE, SQUARE, X, TRIANGLE ---
-    (KEY_SQUARE, 0x00, 0.55),
-    (KEY_CIRCLE, 0x00, 0.55),
-    (KEY_SQUARE, 0x00, 0.55),
-    (KEY_CROSS, 0x00, 0.55),
-    (KEY_TRIANGLE, 0x00, 0.90),
-    
-    # --- Phrase 3: SQUARE, CIRCLE, TRIANGLE, SQUARE + X ---
-    (KEY_SQUARE, 0x00, 0.55),
-    (KEY_CIRCLE, 0x00, 0.55),
-    (KEY_TRIANGLE, 0x00, 0.55),
-    (KEY_SQUARE, KEY_CROSS, 0.90), # Simultaneous chord
-    
-    # --- Phrase 4: SQUARE, TRIANGLE, SQUARE + X, TRIANGLE, TRIANGLE + CIRCLE ---
-    (KEY_SQUARE, 0x00, 0.55),
-    (KEY_TRIANGLE, 0x00, 0.55),
-    (KEY_SQUARE, KEY_CROSS, 0.55), 
-    (KEY_TRIANGLE, 0x00, 0.55),
-    (KEY_TRIANGLE, KEY_CIRCLE, 0.90), 
-    
-    # --- Phrase 5: TRIANGLE + CIRCLE, X, SQUARE, SQUARE + X, CIRCLE, TRIANGLE, TRIANGLE + CIRCLE ---
-    (KEY_TRIANGLE, KEY_CIRCLE, 0.55), 
-    (KEY_CROSS, 0x00, 0.55),
-    (KEY_SQUARE, 0x00, 0.55),
-    (KEY_SQUARE, KEY_CROSS, 0.55), 
-    (KEY_CIRCLE, 0x00, 0.55),
-    (KEY_TRIANGLE, 0x00, 0.55),
-    (KEY_TRIANGLE, KEY_CIRCLE, 0.75)  # Final note execution
-]
+KEY_NAMES = {}
+
+for id in KEY_REGISTRY:
+    if id == 'NONE':
+        continue
+    KEY_NAMES[KEY_REGISTRY[id]] = id
 
 # Threading control
 harp_thread = None
 stop_event = threading.Event()
 
-# Map key codes to human-readable labels for the UI
-KEY_NAMES = {
-    KEY_CROSS: 'Cross (X)',
-    KEY_CIRCLE: 'Circle',
-    KEY_SQUARE: 'Square',
-    KEY_TRIANGLE: 'Triangle'
-}
+def load_harp_sequence():
+    """Reads the JSON file dynamically every time it's called."""
+    path = 'templates/gow3/harp_sequence.json'
+    if not os.path.exists(path):
+        return []
+        
+    with open(path, 'r') as f:
+        data = json.load(f)
+        
+    sequence = []
+    for item in data:
+        k1 = KEY_REGISTRY.get(item['key1'].upper(), 0x00)
+        k2 = KEY_REGISTRY.get(item['key2'].upper(), 0x00)
+        delay = float(item['delay'])
+        sequence.append((k1, k2, delay))
+    return sequence
 
 def get_key_name(k1, k2):
     name1 = KEY_NAMES.get(k1, f"0x{k1:02X}")
@@ -81,24 +62,28 @@ def get_key_name(k1, k2):
 
 def run_harp_puzzle(socketio_instance):
     stop_event.clear()
+    
+    # Load sequence from file dynamically on play
+    harp_sequence = load_harp_sequence()
+    if not harp_sequence:
+        socketio_instance.emit('gow3: status', {'status': 'error', 'message': 'harp_sequence.json not found or empty!'})
+        return
+
     socketio_instance.emit('gow3: status', {'status': 'running', 'message': 'Starting harp sequence...'})
     
-    for idx, (k1, k2, delay) in enumerate(HARP_SEQUENCE, 1):
-        # Check if stop was requested
+    for idx, (k1, k2, delay) in enumerate(harp_sequence, 1):
         if stop_event.is_set():
             socketio_instance.emit('gow3: status', {'status': 'stopped', 'message': 'Sequence stopped by user.'})
             break
             
         key_desc = get_key_name(k1, k2)
         
-        # Broadcast current note progress to the browser
         socketio_instance.emit('gow3: update', {
             'index': idx, 
-            'total': len(HARP_SEQUENCE), 
+            'total': len(harp_sequence), 
             'key': key_desc
         })
         
-        # Send keypresses
         if k2 != 0x00:
             send_keys(k1, key2=k2, release=True)
         else:
