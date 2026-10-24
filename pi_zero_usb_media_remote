@@ -11,7 +11,10 @@ echo 0x0001 > idProduct
 #echo 0x1d6b > idVendor
 #echo 0x0104 > idProduct
 
-
+# Crucial fix: Tell the host this is a multi-interface Composite device
+echo 0xEF > bDeviceClass
+echo 0x02 > bDeviceSubClass
+echo 0x01 > bDeviceProtocol
 
 mkdir -p strings/0x409
 echo "deadbeefdeadbeef" > strings/0x409/serialnumber

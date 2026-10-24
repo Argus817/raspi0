@@ -39,12 +39,22 @@ install() {
     cp ./usb_media_remote.service /lib/systemd/system/usb_media_remote.service
     systemctl daemon-reload
     systemctl enable usb_media_remote.service
+
+    # Enable the virtual console login daemon on the virtual serial stream
+    systemctl enable serial-getty@ttyGS0.service
+
     service usb_media_remote start
+    systemctl start serial-getty@ttyGS0.service
 }
 
 uninstall() {
     service usb_media_remote stop
     systemctl disable usb_media_remote.service
+
+    # Gracefully disable the virtual terminal console service
+    systemctl stop serial-getty@ttyGS0.service
+    systemctl disable serial-getty@ttyGS0.service
+
     systemctl daemon-reload
     rm /lib/systemd/system/usb_media_remote.service
 
