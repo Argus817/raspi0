@@ -4,6 +4,7 @@ from datetime import timedelta
 from keyboard import Key, Mouse, send_key, send_keys
 import json
 import time
+import threading
 
 app = Flask(__name__)
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = timedelta(days=30)
@@ -59,28 +60,69 @@ HARP_SEQUENCE = [
     (KEY_TRIANGLE, KEY_CIRCLE, 0.75)  # Final note execution
 ]
 
-def run_harp_puzzle():
-    print("--- God of War III Harp Sequence Automation ---") 
+# Threading control
+harp_thread = None
+stop_event = threading.Event()
+
+# Map key codes to human-readable labels for the UI
+KEY_NAMES = {
+    KEY_CROSS: 'Cross (X)',
+    KEY_CIRCLE: 'Circle',
+    KEY_SQUARE: 'Square',
+    KEY_TRIANGLE: 'Triangle'
+}
+
+def get_key_name(k1, k2):
+    name1 = KEY_NAMES.get(k1, f"0x{k1:02X}")
+    if k2 != 0x00:
+        name2 = KEY_NAMES.get(k2, f"0x{k2:02X}")
+        return f"{name1} + {name2}"
+    return name1
+
+def run_harp_puzzle(socketio_instance):
+    stop_event.clear()
+    socketio_instance.emit('gow3: status', {'status': 'running', 'message': 'Starting harp sequence...'})
     
     for idx, (k1, k2, delay) in enumerate(HARP_SEQUENCE, 1):
-        print(f"Executing note {idx}/{len(HARP_SEQUENCE)}")
+        # Check if stop was requested
+        if stop_event.is_set():
+            socketio_instance.emit('gow3: status', {'status': 'stopped', 'message': 'Sequence stopped by user.'})
+            break
+            
+        key_desc = get_key_name(k1, k2)
+        
+        # Broadcast current note progress to the browser
+        socketio_instance.emit('gow3: update', {
+            'index': idx, 
+            'total': len(HARP_SEQUENCE), 
+            'key': key_desc
+        })
+        
+        # Send keypresses
         if k2 != 0x00:
             send_keys(k1, key2=k2, release=True)
         else:
             send_key(k1, release=True)
+            
         time.sleep(delay)
-        
-    print("Sequence completed!")
+    else:
+        socketio_instance.emit('gow3: status', {'status': 'completed', 'message': 'Sequence completed successfully!'})
 
 @app.route("/gow3")
 def gow3_index():
-    return render_template(
-        "gow3/index.html"
-    )
+    return render_template("gow3/index.html")
 
 @socketio.on("gow3: playharp")
-def hl_handle_cast(data):
-    run_harp_puzzle() 
+def handle_playharp(data):
+    global harp_thread
+    # Prevent starting a new thread if one is already running
+    if harp_thread is None or not harp_thread.is_alive():
+        harp_thread = threading.Thread(target=run_harp_puzzle, args=(socketio,))
+        harp_thread.start()
+
+@socketio.on("gow3: stopharp")
+def handle_stopharp(data):
+    stop_event.set() 
 
 ##########################################################
 
