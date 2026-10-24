@@ -148,88 +148,21 @@ class Key:
     KEY_MUTE = 0x7F  # Keyboard Mute
     KEY_VOLUMEUP = 0x80  # Keyboard Volume Up
     KEY_VOLUMEDOWN = 0x81  # Keyboard Volume Down
-    # = 0x82  Keyboard Locking Caps Lock
-    # = 0x83  Keyboard Locking Num Lock
-    # = 0x84  Keyboard Locking Scroll Lock
     KEY_KPCOMMA = 0x85  # Keypad Comma
-    # = 0x86  Keypad Equal Sign
     KEY_RO = 0x87  # Keyboard International1
     KEY_KATAKANAHIRAGANA = 0x88  # Keyboard International2
     KEY_YEN = 0x89  # Keyboard International3
     KEY_HENKAN = 0x8A  # Keyboard International4
     KEY_MUHENKAN = 0x8B  # Keyboard International5
     KEY_KPJPCOMMA = 0x8C  # Keyboard International6
-    # = 0x8d  Keyboard International7
-    # = 0x8e  Keyboard International8
-    # = 0x8f  Keyboard International9
     KEY_HANGEUL = 0x90  # Keyboard LANG1
     KEY_HANJA = 0x91  # Keyboard LANG2
     KEY_KATAKANA = 0x92  # Keyboard LANG3
     KEY_HIRAGANA = 0x93  # Keyboard LANG4
     KEY_ZENKAKUHANKAKU = 0x94  # Keyboard LANG5
-    # = 0x95  Keyboard LANG6
-    # = 0x96  Keyboard LANG7
-    # = 0x97  Keyboard LANG8
-    # = 0x98  Keyboard LANG9
-    # = 0x99  Keyboard Alternate Erase
-    # = 0x9a  Keyboard SysReq/Attention
-    # = 0x9b  Keyboard Cancel
-    # = 0x9c  Keyboard Clear
-    # = 0x9d  Keyboard Prior
-    # = 0x9e  Keyboard Return
-    # = 0x9f  Keyboard Separator
-    # = 0xa0  Keyboard Out
-    # = 0xa1  Keyboard Oper
-    # = 0xa2  Keyboard Clear/Again
-    # = 0xa3  Keyboard CrSel/Props
-    # = 0xa4  Keyboard ExSel
 
-    # = 0xb0  Keypad 00
-    # = 0xb1  Keypad 000
-    # = 0xb2  Thousands Separator
-    # = 0xb3  Decimal Separator
-    # = 0xb4  Currency Unit
-    # = 0xb5  Currency Sub-unit
     KEY_KPLEFTPAREN = 0xB6  # Keypad (
     KEY_KPRIGHTPAREN = 0xB7  # Keypad )
-    # = 0xb8  Keypad {
-    # = 0xb9  Keypad }
-    # = 0xba  Keypad Tab
-    # = 0xbb  Keypad Backspace
-    # = 0xbc  Keypad A
-    # = 0xbd  Keypad B
-    # = 0xbe  Keypad C
-    # = 0xbf  Keypad D
-    # = 0xc0  Keypad E
-    # = 0xc1  Keypad F
-    # = 0xc2  Keypad XOR
-    # = 0xc3  Keypad ^
-    # = 0xc4  Keypad %
-    # = 0xc5  Keypad <
-    # = 0xc6  Keypad >
-    # = 0xc7  Keypad &
-    # = 0xc8  Keypad &&
-    # = 0xc9  Keypad |
-    # = 0xca  Keypad ||
-    # = 0xcb  Keypad :
-    # = 0xcc  Keypad #
-    # = 0xcd  Keypad Space
-    # = 0xce  Keypad @
-    # = 0xcf  Keypad !
-    # = 0xd0  Keypad Memory Store
-    # = 0xd1  Keypad Memory Recall
-    # = 0xd2  Keypad Memory Clear
-    # = 0xd3  Keypad Memory Add
-    # = 0xd4  Keypad Memory Subtract
-    # = 0xd5  Keypad Memory Multiply
-    # = 0xd6  Keypad Memory Divide
-    # = 0xd7  Keypad +/-
-    # = 0xd8  Keypad Clear
-    # = 0xd9  Keypad Clear Entry
-    # = 0xda  Keypad Binary
-    # = 0xdb  Keypad Octal
-    # = 0xdc  Keypad Decimal
-    # = 0xdd  Keypad Hexadecimal
 
     KEY_LEFTCTRL = 0xE0  # Keyboard Left Control
     KEY_LEFTSHIFT = 0xE1  # Keyboard Left Shift
@@ -286,14 +219,16 @@ def release_keys():
 
 def release_mouse():
     """Resets the mouse report to all zeros (all buttons and movement cleared)."""
-    _write_gadget('/dev/hidg1', bytes([0] * 4))
+    # 6 bytes total: [Report ID 1, buttons, x, y, wheel, padding][cite: 3]
+    _write_gadget('/dev/hidg2', bytes([0x01, 0x00, 0x00, 0x00, 0x00, 0x00]))
 
 
 def send_key(code, mod=0x00, release=True):
     """
-    Unified API supporting both keyboard keys and mouse buttons.
-    - If `code` is a Mouse button, it performs a click action (press + release).
-    - If `code` is a Keyboard key, it sends the key report.
+    Unified API supporting both keyboard keys, modifier keys, and mouse buttons.
+    - If `code` is a Mouse button, it performs a click action (press + release) on /dev/hidg2.
+    - If `code` is a Modifier key (0xE0 - 0xE7), it automatically maps to the modifier byte.
+    - If `code` is a Keyboard key, it sends the key report on /dev/hidg0.
     """
     if code in (Mouse.LEFT, Mouse.RIGHT, Mouse.MIDDLE, Mouse.BACK, Mouse.FORWARD):
         mouse_button_map = {
@@ -304,12 +239,21 @@ def send_key(code, mod=0x00, release=True):
             Mouse.FORWARD: 0x10
         }
         btn_mask = mouse_button_map.get(code, 0x01)
-        _write_gadget('/dev/hidg1', bytes([btn_mask, 0, 0, 0]))
+        # Target /dev/hidg2 with Report ID 0x01[cite: 3]
+        _write_gadget('/dev/hidg2', bytes([0x01, btn_mask, 0x00, 0x00, 0x00, 0x00]))
         if release:
             time.sleep(0.05)
             release_mouse()
     else:
-        report = bytes([mod & 0xFF, 0x00, code & 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00])
+        effective_mod = mod & 0xFF
+        effective_key = code & 0xFF
+        
+        # Automatically handle modifier key codes passed directly as keys (0xE0 to 0xE7)
+        if 0xE0 <= code <= 0xE7:
+            effective_mod |= (1 << (code - 0xE0))
+            effective_key = 0x00
+            
+        report = bytes([effective_mod, 0x00, effective_key, 0x00, 0x00, 0x00, 0x00, 0x00])
         _write_gadget('/dev/hidg0', report)
         if release:
             time.sleep(0.05)
@@ -318,42 +262,57 @@ def send_key(code, mod=0x00, release=True):
 
 def send_keys(key1, key2=0x00, mod=0x00, release=True):
     """
-    Sends two keyboard keys simultaneously with an optional modifier, 
-    then releases them if release=True.
+    Sends two inputs simultaneously. Supports combinations of keyboard keys, 
+    modifiers, and mouse buttons by dispatching them to their respective endpoints.
     """
-    report = bytes([mod & 0xFF, 0x00, key1 & 0xFF, key2 & 0xFF, 0x00, 0x00, 0x00, 0x00])
-    _write_gadget('/dev/hidg0', report)
+    inputs = [key1, key2]
+    
+    # 1. Handle keyboard modifier if present
+    effective_mod = mod & 0xFF
+    kb_keys = []
+    mouse_actions = []
+
+    for k in inputs:
+        if k == 0x00:
+            continue
+        if k in (Mouse.LEFT, Mouse.RIGHT, Mouse.MIDDLE, Mouse.BACK, Mouse.FORWARD):
+            mouse_actions.append(k)
+        elif 0xE0 <= k <= 0xE7:
+            effective_mod |= (1 << (k - 0xE0))
+        else:
+            kb_keys.append(k & 0xFF)
+
+    # 2. Dispatch Mouse Actions if any are in the mix
+    if mouse_actions:
+        # Determine combined button mask for mouse actions
+        mouse_map = {
+            Mouse.LEFT: 0x01, Mouse.RIGHT: 0x02, 
+            Mouse.MIDDLE: 0x04, Mouse.BACK: 0x08, Mouse.FORWARD: 0x10
+        }
+        btn_mask = sum(mouse_map.get(m, 0) for m in mouse_actions)
+        _write_gadget('/dev/hidg2', bytes([0x01, btn_mask, 0x00, 0x00, 0x00, 0x00]))
+
+    # 3. Dispatch Keyboard Actions if any are present
+    if kb_keys or effective_mod > 0:
+        k1 = kb_keys[0] if len(kb_keys) > 0 else 0x00
+        k2 = kb_keys[1] if len(kb_keys) > 1 else 0x00
+        report = bytes([effective_mod, 0x00, k1, k2, 0x00, 0x00, 0x00, 0x00])
+        _write_gadget('/dev/hidg0', report)
+
+    # 4. Release both endpoints if requested
     if release:
         time.sleep(0.05)
-        release_keys()
-
-
-def mouse_move(x, y):
-    """Moves the mouse relative to its current position."""
-    def to_signed(v):
-        return v & 0xFF
-    _write_gadget('/dev/hidg1', bytes([0x00, to_signed(x), to_signed(y), 0x00]))
+        if mouse_actions:
+            release_mouse()
+        if kb_keys or effective_mod > 0:
+            release_keys()
 
 
 def mouse_scroll(wheel):
     """Scrolls the vertical wheel (positive for up, negative for down)."""
     def to_signed(v):
         return v & 0xFF
-    _write_gadget('/dev/hidg1', bytes([0x00, 0x00, 0x00, to_signed(wheel)]))
-
-
-if __name__ == "__main__":
-    time.sleep(3)
-    
-    # Example 1: Send a single key
-    send_key(Key.KEY_MEDIA_VOLUMEUP)
-    
-    time.sleep(1)
-    
-    # Example 2: Send two keys simultaneously (e.g., Ctrl + C)
-    send_keys(Key.KEY_C, mod=Key.MOD_LEFT_CONTROL)
-    
-    time.sleep(1)
-    
-    # Example 3: Click a mouse button using the unified send_key API
-    send_key(Mouse.LEFT)
+    report = bytes([0x01, 0x00, 0x00, 0x00, to_signed(wheel), 0x00])
+    _write_gadget('/dev/hidg2', report)
+    time.sleep(0.05)
+    release_mouse()
