@@ -19,13 +19,26 @@
 <body>
 <h2 style="text-align:center;">Spell Sets</h2>
 
-
+<div style="text-align:center; margin-bottom:15px;">
+  <a>
+    <button style="
+      padding:10px 16px;
+      font-size:15px;
+      border-radius:6px;
+      border:none;
+      background:#5a2ca0;
+      color:#fff;
+      cursor:pointer;" onclick="playharp()">
+      Play Harp
+    </button>
+  </a>
+</div>
 
 <script>
 const socket = io();
 
-function cast(spellset, slot) {
-  socket.emit("hogwarts-legacy: cast", { spellset, slot });
+function playharp() {
+    socket.emit("gow3: playharp", {});
 }
 </script>
 

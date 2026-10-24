@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
 from datetime import timedelta
-from keyboard import Keycodes, send_key
+from keyboard import Key, Mouse, send_key, send_keys
 import json
 import time
 
@@ -12,28 +12,92 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 ############ GOW3 ########################################
 
+# --- USB HID Keycode Mappings ---
+# Adjust these scancodes to match your emulator (e.g., RPCS3) keyboard configuration:
+KEY_CROSS = Key.KEY_SPACE
+KEY_CIRCLE = Key.KEY_LEFTSHIFT
+KEY_SQUARE = Mouse.LEFT
+KEY_TRIANGLE = Mouse.RIGHT
+
+
+# --- God of War III Giant Harp Sequence (Rhythmic Timings) ---
+# Structured as: (key1, key2, delay_after_seconds)
+HARP_SEQUENCE = [
+    # --- Phrase 1: X, X, X, CIRCLE (Steady moderate tempo) ---
+    (KEY_CROSS, 0x00, 1),
+    (KEY_CROSS, 0x00, 1),
+    (KEY_CROSS, 0x00, 1),
+    (KEY_CIRCLE, 0x00, 0.90), # Brief pause at end of phrase
+    
+    # --- Phrase 2: SQUARE, CIRCLE, SQUARE, X, TRIANGLE ---
+    (KEY_SQUARE, 0x00, 0.55),
+    (KEY_CIRCLE, 0x00, 0.55),
+    (KEY_SQUARE, 0x00, 0.55),
+    (KEY_CROSS, 0x00, 0.55),
+    (KEY_TRIANGLE, 0x00, 0.90),
+    
+    # --- Phrase 3: SQUARE, CIRCLE, TRIANGLE, SQUARE + X ---
+    (KEY_SQUARE, 0x00, 0.55),
+    (KEY_CIRCLE, 0x00, 0.55),
+    (KEY_TRIANGLE, 0x00, 0.55),
+    (KEY_SQUARE, KEY_CROSS, 0.90), # Simultaneous chord
+    
+    # --- Phrase 4: SQUARE, TRIANGLE, SQUARE + X, TRIANGLE, TRIANGLE + CIRCLE ---
+    (KEY_SQUARE, 0x00, 0.55),
+    (KEY_TRIANGLE, 0x00, 0.55),
+    (KEY_SQUARE, KEY_CROSS, 0.55), 
+    (KEY_TRIANGLE, 0x00, 0.55),
+    (KEY_TRIANGLE, KEY_CIRCLE, 0.90), 
+    
+    # --- Phrase 5: TRIANGLE + CIRCLE, X, SQUARE, SQUARE + X, CIRCLE, TRIANGLE, TRIANGLE + CIRCLE ---
+    (KEY_TRIANGLE, KEY_CIRCLE, 0.55), 
+    (KEY_CROSS, 0x00, 0.55),
+    (KEY_SQUARE, 0x00, 0.55),
+    (KEY_SQUARE, KEY_CROSS, 0.55), 
+    (KEY_CIRCLE, 0x00, 0.55),
+    (KEY_TRIANGLE, 0x00, 0.55),
+    (KEY_TRIANGLE, KEY_CIRCLE, 0.75)  # Final note execution
+]
+
+def run_harp_puzzle():
+    print("--- God of War III Harp Sequence Automation ---") 
+    
+    for idx, (k1, k2, delay) in enumerate(HARP_SEQUENCE, 1):
+        print(f"Executing note {idx}/{len(HARP_SEQUENCE)}")
+        if k2 != 0x00:
+            send_keys(k1, key2=k2, release=True)
+        else:
+            send_key(k1, release=True)
+        time.sleep(delay)
+        
+    print("Sequence completed!")
+
 @app.route("/gow3")
 def gow3_index():
     return render_template(
         "gow3/index.html"
     )
 
+@socketio.on("gow3: playharp")
+def hl_handle_cast(data):
+    run_harp_puzzle() 
+
 ##########################################################
 
 ############ HOGWARTS LEGACY #############################
 
 SpellSetKey = {
-    "1": Keycodes.KEY_F1,
-    "2": Keycodes.KEY_F2,
-    "3": Keycodes.KEY_F3,
-    "4": Keycodes.KEY_F4,
+    "1": Key.KEY_F1,
+    "2": Key.KEY_F2,
+    "3": Key.KEY_F3,
+    "4": Key.KEY_F4,
 }
 
 SlotKey = {
-    "1": Keycodes.KEY_1,
-    "2": Keycodes.KEY_2,
-    "3": Keycodes.KEY_3,
-    "4": Keycodes.KEY_4,
+    "1": Key.KEY_1,
+    "2": Key.KEY_2,
+    "3": Key.KEY_3,
+    "4": Key.KEY_4,
 }
 
 def load_hlspell_data():

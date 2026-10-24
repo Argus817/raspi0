@@ -1,4 +1,6 @@
-class Keycodes:    
+import time
+
+class Key:
     MOD_LEFT_CONTROL = 0x01
     MOD_LEFT_SHIFT = 0x02
     MOD_LEFT_ALT = 0x04
@@ -259,37 +261,99 @@ class Keycodes:
     KEY_MEDIA_REFRESH = 0xFA
     KEY_MEDIA_CALC = 0xFB
 
-def send_report(report):
-    try:
-        with open('/dev/hidg0', 'rb+') as fd:
-            fd.write(report.encode())
-    except FileNotFoundError:
-        print(bytes.hex(report.encode()))
 
-def press_key(key, mod=0x00):
-    send_report(chr(mod) + chr(0x00) + chr(key) + chr(0x00)*5)
+class Mouse:
+    # Unique high-range identifiers for unified API routing
+    LEFT = 0x1001
+    RIGHT = 0x1002
+    MIDDLE = 0x1003
+    BACK = 0x1004
+    FORWARD = 0x1005
+
+
+def _write_gadget(path, report):
+    try:
+        with open(path, 'rb+') as fd:
+            fd.write(report)
+    except FileNotFoundError:
+        print(f"[{path}] {report.hex()}")
+
 
 def release_keys():
-    send_report(chr(0x00)*8)
+    """Resets the keyboard report to all zeros (all keys released)."""
+    _write_gadget('/dev/hidg0', bytes([0] * 8))
 
-def send_key(key, mod=0x00, release=True):
-    press_key(key, mod=mod)
-    if release:
-        release_keys()
 
-def press_keys(key1, key2=0x00, mod=0x00):
-    # Sends a report with up to two simultaneous key codes
-    report = chr(mod) + chr(0x00) + chr(key1) + chr(key2) + chr(0x00)*4
-    send_report(report)
+def release_mouse():
+    """Resets the mouse report to all zeros (all buttons and movement cleared)."""
+    _write_gadget('/dev/hidg1', bytes([0] * 4))
+
+
+def send_key(code, mod=0x00, release=True):
+    """
+    Unified API supporting both keyboard keys and mouse buttons.
+    - If `code` is a Mouse button, it performs a click action (press + release).
+    - If `code` is a Keyboard key, it sends the key report.
+    """
+    if code in (Mouse.LEFT, Mouse.RIGHT, Mouse.MIDDLE, Mouse.BACK, Mouse.FORWARD):
+        mouse_button_map = {
+            Mouse.LEFT: 0x01,
+            Mouse.RIGHT: 0x02,
+            Mouse.MIDDLE: 0x04,
+            Mouse.BACK: 0x08,
+            Mouse.FORWARD: 0x10
+        }
+        btn_mask = mouse_button_map.get(code, 0x01)
+        _write_gadget('/dev/hidg1', bytes([btn_mask, 0, 0, 0]))
+        if release:
+            time.sleep(0.05)
+            release_mouse()
+    else:
+        report = bytes([mod & 0xFF, 0x00, code & 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00])
+        _write_gadget('/dev/hidg0', report)
+        if release:
+            time.sleep(0.05)
+            release_keys()
+
 
 def send_keys(key1, key2=0x00, mod=0x00, release=True):
-    press_keys(key1, key2=key2, mod=mod)
+    """
+    Sends two keyboard keys simultaneously with an optional modifier, 
+    then releases them if release=True.
+    """
+    report = bytes([mod & 0xFF, 0x00, key1 & 0xFF, key2 & 0xFF, 0x00, 0x00, 0x00, 0x00])
+    _write_gadget('/dev/hidg0', report)
     if release:
+        time.sleep(0.05)
         release_keys()
 
-import time
+
+def mouse_move(x, y):
+    """Moves the mouse relative to its current position."""
+    def to_signed(v):
+        return v & 0xFF
+    _write_gadget('/dev/hidg1', bytes([0x00, to_signed(x), to_signed(y), 0x00]))
+
+
+def mouse_scroll(wheel):
+    """Scrolls the vertical wheel (positive for up, negative for down)."""
+    def to_signed(v):
+        return v & 0xFF
+    _write_gadget('/dev/hidg1', bytes([0x00, 0x00, 0x00, to_signed(wheel)]))
+
 
 if __name__ == "__main__":
     time.sleep(3)
-    send_key(Keycodes.KEY_MEDIA_VOLUMEUP)
-
+    
+    # Example 1: Send a single key
+    send_key(Key.KEY_MEDIA_VOLUMEUP)
+    
+    time.sleep(1)
+    
+    # Example 2: Send two keys simultaneously (e.g., Ctrl + C)
+    send_keys(Key.KEY_C, mod=Key.MOD_LEFT_CONTROL)
+    
+    time.sleep(1)
+    
+    # Example 3: Click a mouse button using the unified send_key API
+    send_key(Mouse.LEFT)
