@@ -12,6 +12,10 @@ app.config["SEND_FILE_MAX_AGE_DEFAULT"] = timedelta(days=30)
 
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
+@app.route("/")
+def index():
+    return render_template("index.html")
+
 ############ GOW3 ########################################
 
 # --- USB HID Keycode Mappings ---

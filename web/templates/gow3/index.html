@@ -3,7 +3,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>God of War III - Harp Automation</title>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/static/socket.io.min.js"></script>
 
   <style>
     body { background:#0c0f16; color:#fff; font-family:system-ui; text-align:center; padding: 20px; }
@@ -19,6 +19,8 @@
       font-weight: bold;
       margin: 5px;
     }
+    #Btn { background: #5a2ca0; }
+    #Btn:active { background: #46217d; }
     #playBtn { background: #5a2ca0; }
     #playBtn:active { background: #46217d; }
     #stopBtn { background: #c0392b; }
@@ -43,6 +45,9 @@
 </head>
 
 <body>
+  <a href="/">
+    <button id="Btn">Home</button>
+  </a>
   <h2>God of War III Harp Controller</h2>
 
   <div class="btn-container">
