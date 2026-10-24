@@ -1,8 +1,8 @@
 [
-    {"key1": "R1", "key2": "NONE", "delay": 1.85},
-    {"key1": "CROSS", "key2": "NONE", "delay": 0.6},
-    {"key1": "CROSS", "key2": "NONE", "delay": 0.6},
-    {"key1": "CROSS", "key2": "NONE", "delay": 0.6},
+    {"key1": "R1", "key2": "NONE", "delay": 5.5},
+    {"key1": "CROSS", "key2": "NONE", "delay": 1.2},
+    {"key1": "CROSS", "key2": "NONE", "delay": 1.2},
+    {"key1": "CROSS", "key2": "NONE", "delay": 1.2},
     {"key1": "CIRCLE", "key2": "NONE", "delay": 1.85},
     
     {"key1": "SQUARE", "key2": "NONE", "delay": 0.6},
@@ -20,7 +20,7 @@
     {"key1": "TRIANGLE", "key2": "NONE", "delay": 0.6},
     {"key1": "SQUARE", "key2": "CROSS", "delay": 0.6},
     {"key1": "TRIANGLE", "key2": "NONE", "delay": 0.6},
-    {"key1": "TRIANGLE", "key2": "CIRCLE", "delay": 1.85},
+    {"key1": "TRIANGLE", "key2": "CIRCLE", "delay": 3},
     
     {"key1": "TRIANGLE", "key2": "CIRCLE", "delay": 0.6},
     {"key1": "CROSS", "key2": "NONE", "delay": 0.6},
