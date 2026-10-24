@@ -18,6 +18,7 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 # Adjust these scancodes to match your emulator (e.g., RPCS3) keyboard configuration:
 
 KEY_REGISTRY = {
+    'R1': Key.KEY_E,
     'CROSS': Key.KEY_SPACE,
     'CIRCLE': Key.KEY_LEFTSHIFT,
     'SQUARE': Mouse.LEFT,
